@@ -6,17 +6,18 @@ UVC_RESOLUTION = (1920, 1080)
 KEEP_ALIVE_POLL_SECONDS = 0.1
 
 
-def build_uvc_board_config() -> dai.BoardConfig:
-    """The device must know about UVC before boot to set up its USB descriptor."""
-    board_config = dai.BoardConfig()
-    board_config.uvc = dai.BoardConfig.UVC(*UVC_RESOLUTION)
-    board_config.uvc.frameType = dai.ImgFrame.Type.NV12
-    return board_config
+def build_uvc_device_config() -> dai.Device.Config:
+    """The device must know about UVC at boot to set up its USB descriptor."""
+    device_config = dai.Device.Config()
+    device_config.board.uvc = dai.BoardConfig.UVC(*UVC_RESOLUTION)
+    device_config.board.uvc.frameType = dai.ImgFrame.Type.NV12
+    return device_config
 
 
 def main() -> None:
-    with dai.Pipeline() as pipeline:
-        pipeline.setBoardConfig(build_uvc_board_config())
+    # The device is created before the pipeline because a default device would
+    # already be booted without UVC by the time a board config could be set.
+    with dai.Device(build_uvc_device_config()) as device, dai.Pipeline(device) as pipeline:
         camera = pipeline.create(dai.node.Camera).build()
         uvc = pipeline.create(dai.node.UVC)
         camera.requestOutput(UVC_RESOLUTION, dai.ImgFrame.Type.NV12).link(uvc.input)

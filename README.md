@@ -13,12 +13,13 @@ Base project for building on top of a Luxonis OAK-D camera using [DepthAI](https
 | Hardware | Luxonis OAK-D connected over USB (USB 3 cable recommended) |
 
 Platform notes:
-- **macOS / Windows:** no extra setup is usually needed.
+- **macOS / Windows:** no extra setup is needed for the camera itself. The USB 2.0 webcam mode (see below) also needs [OBS Studio](https://obsproject.com/) installed, because it provides the virtual camera.
 - **Linux:** install the Luxonis udev rules so the camera is accessible without root:
   ```sh
   echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="03e7", MODE="0666"' | sudo tee /etc/udev/rules.d/80-movidius.rules
   sudo udevadm control --reload-rules && sudo udevadm trigger
   ```
+- **Linux, USB 2.0 webcam mode:** install and load [v4l2loopback](https://github.com/umlaeute/v4l2loopback) to get a virtual camera device, e.g. `sudo modprobe v4l2loopback exclusive_caps=1`.
 
 ## Setup (on a new machine)
 
@@ -58,9 +59,19 @@ oak-uvc
 python -m oak_uvc.main
 ```
 
-It uses the DepthAI UVC node so the camera is detected as a USB webcam (1920x1080) that any app can use. Keep the program running while you use the webcam; press Ctrl+C to stop.
+It makes the camera show up as a webcam that any app can use. Keep the program running while you use the webcam; press Ctrl+C to stop. Startup takes a few seconds because the camera is booted twice: once to detect the USB speed, and once to start streaming.
 
-The program detects the USB speed first: on a USB 3 port it streams 1920x1080 at 30 fps, and on a USB 2.0 port it falls back to 960x540 at 25 fps, because uncompressed 1080p does not fit in USB 2.0 bandwidth. Startup takes a few seconds longer because the camera is booted twice.
+Depending on the USB connection it works in one of two ways:
+
+| USB speed | Mode | Details |
+| --- | --- | --- |
+| USB 3 | Native UVC | The camera itself acts as a webcam using the DepthAI UVC node (1920x1080, 30 fps). |
+| USB 2.0 | Virtual webcam | The UVC node does not work over USB 2.0. Instead the camera compresses video to MJPEG (1920x1080, 30 fps) and the computer republishes it as a virtual webcam with [pyvirtualcam](https://github.com/letmaik/pyvirtualcam). Needs OBS (macOS/Windows) or v4l2loopback (Linux), see Requirements. In your apps, pick the virtual camera (named "OBS Virtual Camera" on macOS/Windows). |
+
+**Virtual camera requirements for USB 2.0 mode (pyvirtualcam):**
+- **macOS:** install [OBS Studio](https://obsproject.com/). pyvirtualcam uses its virtual camera, so OBS must be installed (you may need to start its virtual camera once so macOS registers it).
+- **Windows:** install [OBS Studio](https://obsproject.com/) for the same reason.
+- **Linux:** install and load [v4l2loopback](https://github.com/umlaeute/v4l2loopback), e.g. `sudo modprobe v4l2loopback exclusive_caps=1`.
 
 ## Test
 
@@ -74,6 +85,10 @@ pytest
 pyproject.toml     # package metadata and dependencies
 src/oak_info/      # prints device info (oak-info)
 src/oak_uvc/       # exposes the camera as a USB webcam (oak-uvc)
+  main.py            #   detects USB speed and picks the mode
+  native_uvc.py      #   USB 3: the camera acts as a UVC webcam
+  virtual_webcam.py  #   USB 2.0: MJPEG stream republished as a virtual webcam
+tests/             # pytest tests
 AGENTS.md          # guidelines for AI agents and contributors
 ```
 

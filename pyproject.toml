@@ -3,7 +3,7 @@ name = "oak-app"
 version = "0.1.0"
 description = "Base project for building on top of a Luxonis OAK-D camera with DepthAI"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "depthai>=3.11,<4",
 ]

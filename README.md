@@ -6,7 +6,7 @@ Base project for building on top of a Luxonis OAK-D camera using [DepthAI](https
 
 | Tool | Version |
 | --- | --- |
-| Python | 3.10 or newer (developed on 3.14.7) |
+| Python | 3.14 (3.15 is not supported yet because DepthAI has no 3.15 wheels) |
 | pip | recent (comes with Python; `pip install --upgrade pip` if in doubt) |
 | DepthAI | `>=3.11,<4` (installed automatically by pip) |
 | Git | any recent version |
@@ -25,7 +25,7 @@ Platform notes:
 ```sh
 git clone <repository-url> depthai
 cd depthai
-python3 -m venv .venv
+python3.14 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```

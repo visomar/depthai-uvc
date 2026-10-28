@@ -58,7 +58,9 @@ oak-uvc
 python -m oak_uvc.main
 ```
 
-It uses the DepthAI UVC node so the camera is detected as a USB webcam (1920x1080) that any app can use. Keep the program running while you use the webcam; press Ctrl+C to stop. The camera may re-enumerate as a UVC device once the stream starts.
+It uses the DepthAI UVC node so the camera is detected as a USB webcam (1920x1080) that any app can use. Keep the program running while you use the webcam; press Ctrl+C to stop.
+
+The program detects the USB speed first: on a USB 3 port it streams 1920x1080 at 30 fps, and on a USB 2.0 port it falls back to 960x540 at 25 fps, because uncompressed 1080p does not fit in USB 2.0 bandwidth. Startup takes a few seconds longer because the camera is booted twice.
 
 ## Test
 

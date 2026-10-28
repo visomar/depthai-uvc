@@ -1,6 +1,6 @@
-# oak-app
+# DepthAI - OAK test
 
-Base project for building on top of a Luxonis OAK-D camera using [DepthAI](https://docs.luxonis.com/software-v3/) v3. For now it only imports the library, connects to the camera, and prints the device info.
+Base project for building on top of a Luxonis OAK-D camera using [DepthAI](https://docs.luxonis.com/software-v3/) v3. It currently includes a device info program and a UVC webcam program.
 
 ## Requirements
 
@@ -40,13 +40,25 @@ python -c "import depthai; print(depthai.__version__)"
 
 Plug in the OAK-D, then:
 
+### Device info (`oak-info`)
+
 ```sh
-oak-app
+oak-info
 # or
-python -m oak_app.main
+python -m oak_info.main
 ```
 
 It prints the DepthAI version, the device name and ID, the USB speed, and the connected cameras.
+
+### UVC webcam (`oak-uvc`)
+
+```sh
+oak-uvc
+# or
+python -m oak_uvc.main
+```
+
+It uses the DepthAI UVC node so the camera is detected as a USB webcam (1920x1080) that any app can use. Keep the program running while you use the webcam; press Ctrl+C to stop. The camera may re-enumerate as a UVC device once the stream starts.
 
 ## Test
 
@@ -58,7 +70,8 @@ pytest
 
 ```
 pyproject.toml     # package metadata and dependencies
-src/oak_app/       # application code
+src/oak_info/      # prints device info (oak-info)
+src/oak_uvc/       # exposes the camera as a USB webcam (oak-uvc)
 AGENTS.md          # guidelines for AI agents and contributors
 ```
 

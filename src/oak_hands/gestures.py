@@ -24,6 +24,7 @@ class FingerState(IntEnum):
 
 
 E, F = FingerState.EXTENDED, FingerState.FOLDED
+ANY = None  # the finger may be in any state
 
 
 class Gesture(Enum):
@@ -40,9 +41,12 @@ class Gesture(Enum):
     PINKY = (F, F, F, F, E)
     FU = (F, F, E, F, F)
     BRITISH_THREE = (F, E, E, E, F)
-    OK = (F, F, E, E, E)
+    OK = (ANY, F, E, E, E)
     SPIDERMAN = (E, E, F, F, E)
     ROCK_AND_ROLL = (F, E, F, F, E)
+
+    def matches(self, states: tuple[FingerState, ...]) -> bool:
+        return all(wanted is ANY or wanted == state for wanted, state in zip(self.value, states))
 
 
 def angle_degrees(a: Point, vertex: Point, c: Point) -> float:
@@ -83,7 +87,4 @@ def finger_state(landmarks: list[Point], joints: tuple[int, int, int]) -> Finger
 def recognize_gesture(landmarks: list[Point]) -> Gesture | None:
     """The gesture the hand is making, or None if it matches none."""
     states = (thumb_state(landmarks), *(finger_state(landmarks, joints) for joints in FINGER_JOINTS))
-    try:
-        return Gesture(states)
-    except ValueError:
-        return None
+    return next((gesture for gesture in Gesture if gesture.matches(states)), None)

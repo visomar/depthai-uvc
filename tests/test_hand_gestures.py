@@ -1,3 +1,5 @@
+import itertools
+
 import pytest
 
 from oak_hands.gestures import FingerState, Gesture, angle_degrees, finger_state, recognize_gesture, thumb_state
@@ -32,6 +34,7 @@ def make_hand(thumb_extended: bool, fingers_extended: tuple[bool, bool, bool, bo
         (False, (False, True, False, False), Gesture.FU),
         (False, (True, True, True, False), Gesture.BRITISH_THREE),
         (False, (False, True, True, True), Gesture.OK),
+        (True, (False, True, True, True), Gesture.OK),
         (True, (True, False, False, True), Gesture.SPIDERMAN),
         (False, (True, False, False, True), Gesture.ROCK_AND_ROLL),
         (False, (True, True, False, False), Gesture.PEACE),
@@ -74,9 +77,18 @@ def test_angle_with_a_zero_length_ray_is_zero():
     assert angle_degrees((0.0, 0.0), (0.0, 0.0), (1.0, 1.0)) == 0.0
 
 
-def test_every_gesture_has_a_distinct_finger_pattern():
-    assert len({gesture.value for gesture in Gesture}) == len(Gesture)
+def test_no_hand_matches_two_gestures():
+    for states in itertools.product((FingerState.EXTENDED, FingerState.FOLDED), repeat=5):
+        assert sum(gesture.matches(states) for gesture in Gesture) <= 1
 
 
-def test_gesture_is_looked_up_by_its_finger_pattern():
-    assert Gesture((FingerState.FOLDED, FingerState.EXTENDED, *(FingerState.FOLDED,) * 3)) is Gesture.ONE
+def test_gesture_matches_its_finger_pattern():
+    assert Gesture.ONE.matches((FingerState.FOLDED, FingerState.EXTENDED, *(FingerState.FOLDED,) * 3))
+
+
+def test_wildcard_finger_matches_any_state():
+    folded_thumb = (FingerState.FOLDED, FingerState.FOLDED, *(FingerState.EXTENDED,) * 3)
+    extended_thumb = (FingerState.EXTENDED, *folded_thumb[1:])
+    bent_thumb = (FingerState.BENT, *folded_thumb[1:])
+
+    assert all(Gesture.OK.matches(states) for states in (folded_thumb, extended_thumb, bent_thumb))

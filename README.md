@@ -79,6 +79,18 @@ oak-uvc --experimental
 - **Windows:** install [OBS Studio](https://obsproject.com/) for the same reason.
 - **Linux:** install and load [v4l2loopback](https://github.com/umlaeute/v4l2loopback), e.g. `sudo modprobe v4l2loopback exclusive_caps=1`.
 
+### Hand landmarks (`oak-hands`)
+
+```sh
+oak-hands
+# or
+python -m oak_hands.main
+```
+
+It runs a two-stage pipeline on the camera, using models from the Luxonis model zoo: the [MediaPipe Palm Detection](https://models.luxonis.com/luxonis/mediapipe-palm-detection/9531aba9-ef45-4ad3-ae03-808387d61bf3) finds each hand, the frame is cropped around it, and the [MediaPipe Hand Landmarker](https://models.luxonis.com/luxonis/mediapipe-hand-landmarker/42815cca-deab-4860-b4a9-d44ebbe2988a) finds its 21 landmarks. Open http://localhost:8082 in a browser to see the live feed with the hand skeleton and left/right label drawn on top. Press `q` in the browser or Ctrl+C in the terminal to stop.
+
+The first run downloads the models, so it needs internet access. The frame rate is 8 fps on RVC2 cameras and 30 fps on RVC4. The feed is shown in the browser because `depthai-nodes` depends on the headless OpenCV build, which has no desktop windows.
+
 ## Test
 
 ```sh
@@ -94,6 +106,11 @@ src/oak_uvc/       # exposes the camera as a USB webcam (oak-uvc)
   main.py            #   detects USB speed and picks the mode
   native_uvc.py      #   USB 3: the camera acts as a UVC webcam
   virtual_webcam.py  #   USB 2.0: MJPEG stream republished as a virtual webcam
+src/oak_hands/     # on-camera hand landmark detection with a live preview (oak-hands)
+  main.py            #   builds the palm detection -> crop -> landmarker pipeline
+  crop_configs.py    #   turns palm detections into crop configs
+  annotator.py       #   draws skeleton and handedness for the browser viewer
+  landmarks.py       #   crop-to-image coordinate math
 tests/             # pytest tests
 AGENTS.md          # guidelines for AI agents and contributors
 ```

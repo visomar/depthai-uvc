@@ -5,7 +5,7 @@ image coordinates, so y grows downwards. The hand is expected to be upright.
 """
 
 import math
-from enum import IntEnum
+from enum import Enum, IntEnum
 
 Point = tuple[float, float]
 
@@ -23,18 +23,26 @@ class FingerState(IntEnum):
     EXTENDED = 1
 
 
-# (thumb, index, middle, ring, little) -> gesture
 E, F = FingerState.EXTENDED, FingerState.FOLDED
-GESTURES: dict[tuple[FingerState, ...], str] = {
-    (E, E, E, E, E): "FIVE",
-    (F, F, F, F, F): "FIST",
-    (E, F, F, F, F): "OK",
-    (F, E, E, F, F): "PEACE",
-    (F, E, F, F, F): "ONE",
-    (E, E, F, F, F): "TWO",
-    (E, E, E, F, F): "THREE",
-    (F, E, E, E, E): "FOUR",
-}
+
+
+class Gesture(Enum):
+    """Each value is the (thumb, index, middle, ring, little) pattern that makes the gesture."""
+
+    FIVE = (E, E, E, E, E)
+    FIST = (F, F, F, F, F)
+    THUMB = (E, F, F, F, F)
+    PEACE = (F, E, E, F, F)
+    ONE = (F, E, F, F, F)
+    TWO = (E, E, F, F, F)
+    THREE = (E, E, E, F, F)
+    FOUR = (F, E, E, E, E)
+    PINKY = (F, F, F, F, E)
+    FU = (F, F, E, F, F)
+    BRITISH_THREE = (F, E, E, E, F)
+    OK = (F, F, E, E, E)
+    SPIDERMAN = (E, E, F, F, E)
+    ROCK_AND_ROLL = (F, E, F, F, E)
 
 
 def angle_degrees(a: Point, vertex: Point, c: Point) -> float:
@@ -72,7 +80,10 @@ def finger_state(landmarks: list[Point], joints: tuple[int, int, int]) -> Finger
     return FingerState.BENT
 
 
-def recognize_gesture(landmarks: list[Point]) -> str | None:
-    """Name of the gesture the hand is making, or None if it matches none."""
+def recognize_gesture(landmarks: list[Point]) -> Gesture | None:
+    """The gesture the hand is making, or None if it matches none."""
     states = (thumb_state(landmarks), *(finger_state(landmarks, joints) for joints in FINGER_JOINTS))
-    return GESTURES.get(states)
+    try:
+        return Gesture(states)
+    except ValueError:
+        return None

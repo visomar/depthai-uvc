@@ -71,7 +71,8 @@ class HandAnnotator(dai.node.HostNode):
         annotations.draw_points(points=[list(point) for point in points], color=SECONDARY_COLOR, thickness=2)
 
         handedness = handedness_label(hand_results[HANDEDNESS_HEAD].getFirstPrediction())
-        label = hand_label(handedness, recognize_gesture(points))
+        gesture = recognize_gesture(points)
+        label = hand_label(handedness, gesture.name if gesture else None)
         annotations.draw_text(
             text=label,
             position=(center[0] - LABEL_OFFSET_LEFT, center[1] - box.size.height / 2 - LABEL_OFFSET_ABOVE_BOX),

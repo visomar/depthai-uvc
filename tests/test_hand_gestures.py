@@ -1,6 +1,6 @@
 import pytest
 
-from oak_hands.gestures import FingerState, angle_degrees, finger_state, recognize_gesture, thumb_state
+from oak_hands.gestures import FingerState, Gesture, angle_degrees, finger_state, recognize_gesture, thumb_state
 
 LANDMARK_COUNT = 21
 FINGER_JOINTS_BY_FINGER = ((6, 7, 8), (10, 11, 12), (14, 15, 16), (18, 19, 20))
@@ -25,14 +25,20 @@ def make_hand(thumb_extended: bool, fingers_extended: tuple[bool, bool, bool, bo
 @pytest.mark.parametrize(
     "thumb, fingers, gesture",
     [
-        (True, (True, True, True, True), "FIVE"),
-        (False, (False, False, False, False), "FIST"),
-        (True, (False, False, False, False), "OK"),
-        (False, (True, True, False, False), "PEACE"),
-        (False, (True, False, False, False), "ONE"),
-        (True, (True, False, False, False), "TWO"),
-        (True, (True, True, False, False), "THREE"),
-        (False, (True, True, True, True), "FOUR"),
+        (True, (True, True, True, True), Gesture.FIVE),
+        (False, (False, False, False, False), Gesture.FIST),
+        (True, (False, False, False, False), Gesture.THUMB),
+        (False, (False, False, False, True), Gesture.PINKY),
+        (False, (False, True, False, False), Gesture.FU),
+        (False, (True, True, True, False), Gesture.BRITISH_THREE),
+        (False, (False, True, True, True), Gesture.OK),
+        (True, (True, False, False, True), Gesture.SPIDERMAN),
+        (False, (True, False, False, True), Gesture.ROCK_AND_ROLL),
+        (False, (True, True, False, False), Gesture.PEACE),
+        (False, (True, False, False, False), Gesture.ONE),
+        (True, (True, False, False, False), Gesture.TWO),
+        (True, (True, True, False, False), Gesture.THREE),
+        (False, (True, True, True, True), Gesture.FOUR),
     ],
 )
 def test_recognizes_gesture(thumb, fingers, gesture):
@@ -40,7 +46,7 @@ def test_recognizes_gesture(thumb, fingers, gesture):
 
 
 def test_unknown_finger_combination_is_not_a_gesture():
-    assert recognize_gesture(make_hand(False, (False, True, False, False))) is None
+    assert recognize_gesture(make_hand(False, (True, False, True, False))) is None
 
 
 def test_bent_finger_prevents_recognition():
@@ -66,3 +72,11 @@ def test_angle_between_perpendicular_rays_is_90_degrees():
 
 def test_angle_with_a_zero_length_ray_is_zero():
     assert angle_degrees((0.0, 0.0), (0.0, 0.0), (1.0, 1.0)) == 0.0
+
+
+def test_every_gesture_has_a_distinct_finger_pattern():
+    assert len({gesture.value for gesture in Gesture}) == len(Gesture)
+
+
+def test_gesture_is_looked_up_by_its_finger_pattern():
+    assert Gesture((FingerState.FOLDED, FingerState.EXTENDED, *(FingerState.FOLDED,) * 3)) is Gesture.ONE

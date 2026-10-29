@@ -11,6 +11,6 @@ Guidelines for any AI coding agent (or human) working in this repository.
 
 ## Project notes
 
-- Python packages live in `src/`: `oak_info` (prints device info) and `oak_uvc` (exposes the camera as a USB webcam via the UVC node).
+- Python packages live in `src/`: `oak_info` (prints device info) and `oak_uvc` (exposes the camera as a USB webcam: native UVC node on USB 3, MJPEG virtual webcam on USB 2.0). Tests live in `tests/`.
 - Uses DepthAI v3 (`depthai>=3.11,<4`). The v3 API differs from v2, so v2 examples found online usually will not work.
 - See `README.md` for setup and run instructions.

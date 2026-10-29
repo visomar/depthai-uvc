@@ -2,7 +2,8 @@ import depthai as dai
 from depthai_nodes import SECONDARY_COLOR, GatheredData
 from depthai_nodes.utils import AnnotationHelper
 
-from oak_hands.landmarks import crop_to_image_coordinates, handedness_label, padded_size
+from oak_hands.gestures import recognize_gesture
+from oak_hands.landmarks import crop_to_image_coordinates, hand_label, handedness_label, padded_size
 
 KEYPOINTS_HEAD = "0"
 SCORE_HEAD = "1"
@@ -69,7 +70,8 @@ class HandAnnotator(dai.node.HostNode):
             annotations.draw_line(pt1=points[start], pt2=points[end])
         annotations.draw_points(points=[list(point) for point in points], color=SECONDARY_COLOR, thickness=2)
 
-        label = handedness_label(hand_results[HANDEDNESS_HEAD].getFirstPrediction())
+        handedness = handedness_label(hand_results[HANDEDNESS_HEAD].getFirstPrediction())
+        label = hand_label(handedness, recognize_gesture(points))
         annotations.draw_text(
             text=label,
             position=(center[0] - LABEL_OFFSET_LEFT, center[1] - box.size.height / 2 - LABEL_OFFSET_ABOVE_BOX),

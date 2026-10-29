@@ -1,6 +1,6 @@
 import pytest
 
-from oak_hands.landmarks import clamp_to_unit, crop_to_image_coordinates, handedness_label, padded_size
+from oak_hands.landmarks import clamp_to_unit, crop_to_image_coordinates, hand_label, handedness_label, padded_size
 
 
 def test_padding_is_added_on_every_side():
@@ -33,3 +33,11 @@ def test_points_outside_the_image_are_clamped():
 @pytest.mark.parametrize("probability, label", [(0.1, "Left"), (0.49, "Left"), (0.5, "Right"), (0.9, "Right")])
 def test_handedness_label(probability, label):
     assert handedness_label(probability) == label
+
+
+def test_label_includes_the_gesture_when_recognized():
+    assert hand_label("Left", "PEACE") == "Left PEACE"
+
+
+def test_label_is_just_the_handedness_without_a_gesture():
+    assert hand_label("Right", None) == "Right"

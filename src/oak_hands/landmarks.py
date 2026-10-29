@@ -24,3 +24,7 @@ def crop_to_image_coordinates(
 
 def handedness_label(right_hand_probability: float) -> str:
     return "Right" if right_hand_probability >= 0.5 else "Left"
+
+
+def hand_label(handedness: str, gesture: str | None) -> str:
+    return f"{handedness} {gesture}" if gesture else handedness

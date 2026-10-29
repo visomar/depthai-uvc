@@ -1,3 +1,6 @@
+import argparse
+import time
+
 import depthai as dai
 from depthai_nodes.node import FrameCropper, GatherData, ParsingNeuralNetwork
 
@@ -13,6 +16,17 @@ VISUALIZER_PORT = 8082
 QUIT_KEY = ord("q")
 RVC2_FPS = 8
 DEFAULT_FPS = 30
+KEEP_ALIVE_POLL_SECONDS = 0.1
+
+
+def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Detect hand landmarks on the camera")
+    parser.add_argument(
+        "--live-feed",
+        action="store_true",
+        help=f"Stream the video with the hand landmarks to http://localhost:{VISUALIZER_PORT}",
+    )
+    return parser.parse_args(argv)
 
 
 def load_model(model: str, platform: str) -> dai.NNArchive:
@@ -58,7 +72,7 @@ def encode_for_visualizer(
 
 
 def build_hand_pipeline(pipeline: dai.Pipeline, platform: str) -> tuple[dai.Node.Output, dai.Node.Output]:
-    """Palm detection -> crop each palm -> hand landmarks. Returns (video, annotations)."""
+    """Palm detection -> crop each palm -> hand landmarks. Returns (raw video, annotations)."""
     frame_type = frame_type_for(platform)
     fps = fps_for(platform)
     palm_archive = load_model(PALM_DETECTION_MODEL, platform)
@@ -90,27 +104,45 @@ def build_hand_pipeline(pipeline: dai.Pipeline, platform: str) -> tuple[dai.Node
     )
     skeleton_edges = landmarker_archive.getConfig().model.heads[0].metadata.extraParams["skeleton_edges"]
     annotator = pipeline.create(HandAnnotator).build(hands.out, CROP_PADDING, MIN_HAND_SCORE, skeleton_edges)
-    return encode_for_visualizer(pipeline, video, fps), annotator.annotations_output
+    return video, annotator.annotations_output
+
+
+def attach_live_feed(
+    pipeline: dai.Pipeline, platform: str, video: dai.Node.Output, annotations: dai.Node.Output
+) -> dai.RemoteConnection:
+    """Only called with --live-feed: nothing is encoded or streamed to the host otherwise."""
+    visualizer = dai.RemoteConnection(httpPort=VISUALIZER_PORT)
+    visualizer.addTopic("Video", encode_for_visualizer(pipeline, video, fps_for(platform)), "images")
+    visualizer.addTopic("Hands", annotations, "images")
+    return visualizer
+
+
+def wait_until_stopped(pipeline: dai.Pipeline, visualizer: dai.RemoteConnection | None) -> None:
+    try:
+        while pipeline.isRunning():
+            if visualizer is not None and visualizer.waitKey(1) == QUIT_KEY:
+                break
+            if visualizer is None:
+                time.sleep(KEEP_ALIVE_POLL_SECONDS)
+    except KeyboardInterrupt:
+        print("Stopping hand landmarker.")
 
 
 def main() -> None:
-    visualizer = dai.RemoteConnection(httpPort=VISUALIZER_PORT)
+    live_feed = parse_arguments().live_feed
     with dai.Device() as device, dai.Pipeline(device) as pipeline:
         platform = device.getPlatform().name
         print(f"Platform: {platform}")
         video, annotations = build_hand_pipeline(pipeline, platform)
-        visualizer.addTopic("Video", video, "images")
-        visualizer.addTopic("Hands", annotations, "images")
+        visualizer = attach_live_feed(pipeline, platform, video, annotations) if live_feed else None
 
         pipeline.start()
-        visualizer.registerPipeline(pipeline)
-        print(f"Open http://localhost:{VISUALIZER_PORT} to see the feed. Press '{chr(QUIT_KEY)}' there or Ctrl+C to stop.")
-        try:
-            while pipeline.isRunning():
-                if visualizer.waitKey(1) == QUIT_KEY:
-                    break
-        except KeyboardInterrupt:
-            print("Stopping hand landmarker.")
+        if visualizer is None:
+            print("Hand landmarker is running on the camera without a live feed (use --live-feed to see it). Press Ctrl+C to stop.")
+        else:
+            visualizer.registerPipeline(pipeline)
+            print(f"Open http://localhost:{VISUALIZER_PORT} to see the feed. Press '{chr(QUIT_KEY)}' there or Ctrl+C to stop.")
+        wait_until_stopped(pipeline, visualizer)
 
 
 if __name__ == "__main__":

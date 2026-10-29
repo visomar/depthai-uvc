@@ -18,7 +18,7 @@ class HandAnnotator(dai.node.HostNode):
     def __init__(self) -> None:
         super().__init__()
         self.gathered_data = self.createInput()
-        self.out = self.createOutput(
+        self.annotations_output = self.createOutput(
             possibleDatatypes=[dai.Node.DatatypeHierarchy(dai.DatatypeEnum.ImgAnnotations, True)]
         )
         self._padding = 0.0
@@ -46,7 +46,7 @@ class HandAnnotator(dai.node.HostNode):
             hand_results = gathered_data.items[index]
             if hand_results[SCORE_HEAD].getFirstPrediction() >= self._min_score:
                 self._annotate_hand(annotations, detection, hand_results)
-        self.out.send(
+        self.annotations_output.send(
             annotations.build(
                 timestamp=detections.getTimestamp(),
                 sequence_num=detections.getSequenceNum(),

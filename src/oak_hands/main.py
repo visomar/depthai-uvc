@@ -90,7 +90,7 @@ def build_hand_pipeline(pipeline: dai.Pipeline, platform: str) -> tuple[dai.Node
     )
     skeleton_edges = landmarker_archive.getConfig().model.heads[0].metadata.extraParams["skeleton_edges"]
     annotator = pipeline.create(HandAnnotator).build(hands.out, CROP_PADDING, MIN_HAND_SCORE, skeleton_edges)
-    return encode_for_visualizer(pipeline, video, fps), annotator.out
+    return encode_for_visualizer(pipeline, video, fps), annotator.annotations_output
 
 
 def main() -> None:

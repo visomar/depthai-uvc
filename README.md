@@ -66,7 +66,13 @@ Depending on the USB connection it works in one of two ways:
 | USB speed | Mode | Details |
 | --- | --- | --- |
 | USB 3 | Native UVC | The camera itself acts as a webcam using the DepthAI UVC node (1920x1080, 30 fps). |
-| USB 2.0 | Virtual webcam | The UVC node does not work over USB 2.0. Instead the camera compresses video to MJPEG (1920x1080, 30 fps) and the computer republishes it as a virtual webcam with [pyvirtualcam](https://github.com/letmaik/pyvirtualcam). Needs OBS (macOS/Windows) or v4l2loopback (Linux), see Requirements. In your apps, pick the virtual camera (named "OBS Virtual Camera" on macOS/Windows). |
+| USB 2.0 or lower | Virtual webcam (experimental) | Only runs with `--experimental`. The UVC node does not work over USB 2.0. Instead the camera compresses video to MJPEG (1920x1080, 30 fps) and the computer republishes it as a virtual webcam with [pyvirtualcam](https://github.com/letmaik/pyvirtualcam). Needs OBS (macOS/Windows) or v4l2loopback (Linux), see Requirements. In your apps, pick the virtual camera (named "OBS Virtual Camera" on macOS/Windows). |
+
+On USB 2.0 or lower, `oak-uvc` exits with the error `USB 2.0 or lower is not supported` unless you pass the flag. The virtual webcam mode is untested, so it is opt-in:
+
+```sh
+oak-uvc --experimental
+```
 
 **Virtual camera requirements for USB 2.0 mode (pyvirtualcam):**
 - **macOS:** install [OBS Studio](https://obsproject.com/). pyvirtualcam uses its virtual camera, so OBS must be installed (you may need to start its virtual camera once so macOS registers it).
